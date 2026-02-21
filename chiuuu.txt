@@ -1,8 +1,11 @@
+-- Chờ game load hoàn toàn
+if not game:IsLoaded() then game.Loaded:Wait() end
+
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Apple Hub Clone | chii Hauu Edition",
-    SubTitle = "Special for Delta Executor",
+    Title = "Apple Hub | chii Hauu Edition",
+    SubTitle = "Delta Optimized",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
     Acrylic = false, 
@@ -44,7 +47,7 @@ function EquipWeapon()
     end)
 end
 
--- // TWEEN //
+-- // TWEEN DI CHUYỂN //
 function TweenTo(Pos)
     local char = game.Players.LocalPlayer.Character
     if char and char:FindFirstChild("HumanoidRootPart") then
@@ -53,7 +56,7 @@ function TweenTo(Pos)
     end
 end
 
--- // LOGIC FARM //
+-- // VÒNG LẶP FARM //
 spawn(function()
     while task.wait() do
         if _G.AutoFarm then
@@ -79,9 +82,9 @@ spawn(function()
                     if enemy and enemy:FindFirstChild("HumanoidRootPart") then
                         EquipWeapon()
                         TweenTo(enemy.HumanoidRootPart.CFrame * CFrame.new(0, _G.DistanceMob, 0))
-                        -- Auto Click chuẩn
                         game:GetService("VirtualUser"):Button1Down(Vector2.new(1280, 672))
                     else
+                        -- Đợi quái hồi
                         TweenTo(GetQuest()[3] * CFrame.new(0, 50, 0))
                     end
                 end
@@ -98,5 +101,47 @@ local Tabs = {
 Tabs.Main:AddDropdown("WeaponDropdown", {
     Title = "Chọn Vũ Khí",
     Values = {"Melee", "Sword", "Blox Fruit"},
-    Default =
-    
+    Default = "Melee",
+    Callback = function(Value)
+        _G.Weapon = Value
+    end
+})
+
+Tabs.Main:AddToggle("AutoFarmToggle", {
+    Title = "Bật Auto Farm Level",
+    Default = false,
+    Callback = function(Value)
+        _G.AutoFarm = Value
+    end
+})
+
+Tabs.Main:AddSlider("DistanceSlider", {
+    Title = "Khoảng cách đứng",
+    Default = 10,
+    Min = 5,
+    Max = 25,
+    Rounding = 0,
+    Callback = function(Value)
+        _G.DistanceMob = Value
+    end
+})
+
+-- Nút nổi hỗ trợ Delta (Nhấn để hiện lại menu)
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+local Toggle = Instance.new("TextButton", ScreenGui)
+Toggle.Size = UDim2.new(0, 60, 0, 30)
+Toggle.Position = UDim2.new(0, 10, 0, 150)
+Toggle.Text = "Ẩn/Hiện"
+Toggle.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+Toggle.Draggable = true
+Toggle.MouseButton1Click:Connect(function()
+    game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.LeftControl, false, game)
+end)
+
+Fluent:Notify({
+    Title = "Apple Hub",
+    Content = "Chào chii Hauu, menu đã bật!",
+    Duration = 5
+})
+
+Window:SelectTab(1)
