@@ -1,0 +1,125 @@
+-- Chờ Delta ổn định
+repeat task.wait() until game:IsLoaded()
+
+-- Xóa menu cũ để tránh kẹt bộ nhớ Delta
+local function ClearOldUI()
+    for _, v in pairs(game.CoreGui:GetChildren()) do
+        if v.Name == "Orion" or v:FindFirstChild("Main") then
+            v:Destroy()
+        end
+    end
+end
+pcall(ClearOldUI)
+
+-- Load thư viện với hệ thống kiểm tra lỗi
+local status, OrionLib = pcall(function()
+    return loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+end)
+
+if not status then 
+    warn("Lỗi load Orion: chii Hauu hãy kiểm tra lại kết nối mạng!")
+    return 
+end
+
+local Window = OrionLib:MakeWindow({
+    Name = "Apple Hub | chii Hauu Edition", 
+    HidePremium = false, 
+    SaveConfig = true, 
+    IntroText = "Delta Powered - chii Hauu"
+})
+
+-- // BIẾN //
+_G.AutoFarm = false
+_G.Weapon = "Melee"
+_G.DistanceMob = 10
+
+-- // HÀM NHẬN QUEST //
+local function GetQuest()
+    local lvl = game:GetService("Players").LocalPlayer.Data.Level.Value
+    if lvl >= 1 and lvl <= 9 then
+        return {"BanditQuest1", "Bandit", CFrame.new(1059, 15, 1550)}
+    elseif lvl >= 10 and lvl <= 14 then
+        return {"MonkeyQuest1", "Monkey", CFrame.new(-1598, 35, 153)}
+    elseif lvl >= 15 and lvl <= 29 then
+        return {"GorillaQuest1", "Gorilla", CFrame.new(-1598, 35, 153)}
+    else
+        return {"BanditQuest1", "Bandit", CFrame.new(1059, 15, 1550)}
+    end
+end
+
+-- // VŨ KHÍ //
+function EquipWeapon()
+    pcall(function()
+        local backpack = game.Players.LocalPlayer.Backpack
+        local char = game.Players.LocalPlayer.Character
+        for _, v in pairs(backpack:GetChildren()) do
+            if v:IsA("Tool") and (v.ToolTip == _G.Weapon or v.Name:find(_G.Weapon)) then
+                char.Humanoid:EquipTool(v)
+            end
+        end
+    end)
+end
+
+-- // DI CHUYỂN //
+function TweenTo(Pos)
+    local char = game.Players.LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        local dist = (Pos.Position - char.HumanoidRootPart.Position).Magnitude
+        game:GetService("TweenService"):Create(char.HumanoidRootPart, TweenInfo.new(dist/300, Enum.EasingStyle.Linear), {CFrame = Pos}):Play()
+    end
+end
+
+-- // FARM LOGIC //
+spawn(function()
+    while task.wait() do
+        if _G.AutoFarm then
+            pcall(function()
+                local playerGui = game:GetService("Players").LocalPlayer.PlayerGui
+                if not playerGui.Main:FindFirstChild("Quest") then
+                    local q = GetQuest()
+                    TweenTo(q[3])
+                    if (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - q[3].Position).Magnitude < 15 then
+                        task.wait(0.5)
+                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", q[1], 1)
+                    end
+                else
+                    local q = GetQuest()
+                    local enemy = game.Workspace.Enemies:FindFirstChild(q[2]) or game.Workspace.Enemies:FindFirstChildOfClass("Model")
+                    if enemy and enemy:FindFirstChild("HumanoidRootPart") and enemy.Humanoid.Health > 0 then
+                        EquipWeapon()
+                        TweenTo(enemy.HumanoidRootPart.CFrame * CFrame.new(0, _G.DistanceMob, 0))
+                        game:GetService("VirtualUser"):CaptureController()
+                        game:GetService("VirtualUser"):ClickButton1(Vector2.new(851, 158), game.Workspace.CurrentCamera.CFrame)
+                    else
+                        TweenTo(GetQuest()[3] * CFrame.new(0, 50, 0))
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- // TAB GIAO DIỆN //
+local MainTab = Window:MakeTab({Name = "Main", Icon = "rbxassetid://4483345998"})
+
+MainTab:AddDropdown({
+    Name = "Chọn Vũ Khí",
+    Default = "Melee",
+    Options = {"Melee", "Sword", "Blox Fruit"},
+    Callback = function(v) _G.Weapon = v end    
+})
+
+MainTab:AddToggle({
+    Name = "Bật Auto Farm",
+    Default = false,
+    Callback = function(v) _G.AutoFarm = v end    
+})
+
+MainTab:AddSlider({
+    Name = "Khoảng cách Farm",
+    Min = 5, Max = 25, Default = 10,
+    Increment = 1,
+    Callback = function(v) _G.DistanceMob = v end    
+})
+
+OrionLib:Init()
