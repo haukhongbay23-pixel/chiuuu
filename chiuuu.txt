@@ -1,34 +1,16 @@
--- Chờ Delta ổn định
-repeat task.wait() until game:IsLoaded()
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
--- Xóa menu cũ để tránh kẹt bộ nhớ Delta
-local function ClearOldUI()
-    for _, v in pairs(game.CoreGui:GetChildren()) do
-        if v.Name == "Orion" or v:FindFirstChild("Main") then
-            v:Destroy()
-        end
-    end
-end
-pcall(ClearOldUI)
-
--- Load thư viện với hệ thống kiểm tra lỗi
-local status, OrionLib = pcall(function()
-    return loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
-end)
-
-if not status then 
-    warn("Lỗi load Orion: chii Hauu hãy kiểm tra lại kết nối mạng!")
-    return 
-end
-
-local Window = OrionLib:MakeWindow({
-    Name = "Apple Hub | chii Hauu Edition", 
-    HidePremium = false, 
-    SaveConfig = true, 
-    IntroText = "Delta Powered - chii Hauu"
+local Window = Fluent:CreateWindow({
+    Title = "Apple Hub Clone | chii Hauu Edition",
+    SubTitle = "Special for Delta Executor",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(580, 460),
+    Acrylic = false, 
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.LeftControl 
 })
 
--- // BIẾN //
+-- // CẤU HÌNH //
 _G.AutoFarm = false
 _G.Weapon = "Melee"
 _G.DistanceMob = 10
@@ -50,17 +32,19 @@ end
 -- // VŨ KHÍ //
 function EquipWeapon()
     pcall(function()
-        local backpack = game.Players.LocalPlayer.Backpack
+        local bp = game.Players.LocalPlayer.Backpack
         local char = game.Players.LocalPlayer.Character
-        for _, v in pairs(backpack:GetChildren()) do
-            if v:IsA("Tool") and (v.ToolTip == _G.Weapon or v.Name:find(_G.Weapon)) then
-                char.Humanoid:EquipTool(v)
+        if not char:FindFirstChild(_G.Weapon) then
+            for _, v in pairs(bp:GetChildren()) do
+                if v:IsA("Tool") and (v.ToolTip == _G.Weapon or v.Name:find(_G.Weapon)) then
+                    char.Humanoid:EquipTool(v)
+                end
             end
         end
     end)
 end
 
--- // DI CHUYỂN //
+-- // TWEEN //
 function TweenTo(Pos)
     local char = game.Players.LocalPlayer.Character
     if char and char:FindFirstChild("HumanoidRootPart") then
@@ -69,7 +53,7 @@ function TweenTo(Pos)
     end
 end
 
--- // FARM LOGIC //
+-- // LOGIC FARM //
 spawn(function()
     while task.wait() do
         if _G.AutoFarm then
@@ -84,12 +68,19 @@ spawn(function()
                     end
                 else
                     local q = GetQuest()
-                    local enemy = game.Workspace.Enemies:FindFirstChild(q[2]) or game.Workspace.Enemies:FindFirstChildOfClass("Model")
-                    if enemy and enemy:FindFirstChild("HumanoidRootPart") and enemy.Humanoid.Health > 0 then
+                    local enemy = nil
+                    for i,v in pairs(game.Workspace.Enemies:GetChildren()) do
+                        if v.Name == q[2] and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                            enemy = v
+                            break
+                        end
+                    end
+                    
+                    if enemy and enemy:FindFirstChild("HumanoidRootPart") then
                         EquipWeapon()
                         TweenTo(enemy.HumanoidRootPart.CFrame * CFrame.new(0, _G.DistanceMob, 0))
-                        game:GetService("VirtualUser"):CaptureController()
-                        game:GetService("VirtualUser"):ClickButton1(Vector2.new(851, 158), game.Workspace.CurrentCamera.CFrame)
+                        -- Auto Click chuẩn
+                        game:GetService("VirtualUser"):Button1Down(Vector2.new(1280, 672))
                     else
                         TweenTo(GetQuest()[3] * CFrame.new(0, 50, 0))
                     end
@@ -99,27 +90,13 @@ spawn(function()
     end
 end)
 
--- // TAB GIAO DIỆN //
-local MainTab = Window:MakeTab({Name = "Main", Icon = "rbxassetid://4483345998"})
+-- // GIAO DIỆN //
+local Tabs = {
+    Main = Window:AddTab({ Title = "Main", Icon = "home" })
+}
 
-MainTab:AddDropdown({
-    Name = "Chọn Vũ Khí",
-    Default = "Melee",
-    Options = {"Melee", "Sword", "Blox Fruit"},
-    Callback = function(v) _G.Weapon = v end    
-})
-
-MainTab:AddToggle({
-    Name = "Bật Auto Farm",
-    Default = false,
-    Callback = function(v) _G.AutoFarm = v end    
-})
-
-MainTab:AddSlider({
-    Name = "Khoảng cách Farm",
-    Min = 5, Max = 25, Default = 10,
-    Increment = 1,
-    Callback = function(v) _G.DistanceMob = v end    
-})
-
-OrionLib:Init()
+Tabs.Main:AddDropdown("WeaponDropdown", {
+    Title = "Chọn Vũ Khí",
+    Values = {"Melee", "Sword", "Blox Fruit"},
+    Default =
+    
